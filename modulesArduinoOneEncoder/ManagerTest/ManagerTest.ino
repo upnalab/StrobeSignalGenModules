@@ -13,6 +13,7 @@ void setup() {
   controller.addNumber("Duty", 0, 1000, 5, 1);
   controller.addBoolean("Enable", false);
   Serial.begin( 115200 );
+  controller.printDebugInfo = true;
   controller.init();
 }
 

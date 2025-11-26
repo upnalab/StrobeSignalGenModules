@@ -7,7 +7,7 @@
 #include <EEPROM.h>
 
 #define PELICAN_CTRL_MAX_PARAMS 4
-#define PELICAN_EEPROM_CODE 0x5ECA
+#define PELICAN_EEPROM_CODE 0x5ECB
 
 class PelicanController {
 public:
@@ -51,13 +51,13 @@ public:
     p.boolean.value = val;
   }
 
-  void addStringList(const char* name, const char** opts) {
+  void addStringList(const char* name, const char** opts, uint8_t strIndex=0) {
     if (paramCount >= PELICAN_CTRL_MAX_PARAMS) return;
     Param& p = params[paramCount++];
     p.name = name;
     p.type = STR;
     p.str.options = opts;
-    p.str.index = 0;
+    p.str.index = strIndex;
     p.str.nOptions = countOptions(opts);
   }
 
@@ -98,14 +98,16 @@ public:
         Serial.print( "releasing" );
         Serial.println( diff );
       }
-      if (diff > ticksForButtonPress * 1024) {   // long press → cycle mode
+      if (diff > ticksForButtonPress * 1024) {   // long press → save
+        if (printDebugInfo) Serial.println( "Saving config" );
+        saveToEEPROM(); 
+      }
+      /* else if (diff > ticksForButtonPress * 1024) { // medium press → cycle mode
         if (printDebugInfo) Serial.println( "Changing mode" );
         mode = (mode + 1) % MODE_LAST_MODE;
         needsRender = true;
-      } else if (diff > ticksForButtonPress * 256) { // medium press → save
-        if (printDebugInfo) Serial.println( "Saving config" );
-        saveToEEPROM();
       }
+      */
       btnDownTick = ticks;
     }
 
@@ -178,7 +180,7 @@ private:
   enum ParamType { NUM, BOOL, STR };
   enum ControllerState { NAVIGATION, SELECTING_DIGIT, DIALING_DIGIT };
   enum ControllerMode { MODE_PARAM = 0, MODE_DIGIT_ROT, MODE_DIGIT_PRESS, MODE_LAST_MODE };
-  ControllerMode mode = MODE_PARAM;
+  ControllerMode mode = MODE_DIGIT_ROT;
   ControllerState state = NAVIGATION;
 
   struct Param {
